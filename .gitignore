@@ -1,0 +1,11 @@
+/target/
+/data/
+**/*.rs.bk
+.DS_Store
+.idea/
+.vscode/
+
+# Local pmat / pv tooling state
+/.pmat/
+/.pmat-metrics/
+/.pv/

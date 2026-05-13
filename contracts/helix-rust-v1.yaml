@@ -1,0 +1,66 @@
+metadata:
+  version: 1.0.0
+  created: '2026-05-13'
+  author: 'PAIML Engineering'
+  description: |
+    Four named runtime contracts for the `helix-core` crate of
+    paiml/helixdb-from-zero. Each contract is asserted at runtime in
+    crates/helix-core/src/lib.rs immediately after the HTTP round trip
+    against the HelixDB instance, and re-asserted in the demo binary.
+
+  references:
+    - 'README §Provable contracts'
+    - 'sibling specs: contracts/valkey-rust-v1.yaml, contracts/duckdb-rust-v1.yaml'
+
+equations:
+  vertex_round_trip:
+    formula: 'get(insert(d)) == d'
+    domain: 'd ∈ Document'
+    codomain: 'bool'
+    lean_theorem: Theorems.HelixCore.VertexRoundTrip
+    postconditions:
+      - 'get_document(d.id).id == d.id'
+      - 'get_document(d.id).title == d.title'
+
+  edge_traversal:
+    formula: 'after insert_edge(a, b, l): b ∈ neighbours(a, l)'
+    domain: 'a, b ∈ VertexId, l ∈ EdgeLabel'
+    codomain: 'bool'
+    lean_theorem: Theorems.HelixCore.EdgeTraversal
+    postconditions:
+      - 'neighbours(a, l).contains(b)'
+
+  vector_top_k_contains_self:
+    formula: 'top_k(v.embedding, k)[0] == v.id, k >= 1'
+    domain: 'v ∈ Document, k ∈ Nat, k >= 1'
+    codomain: 'bool'
+    lean_theorem: Theorems.HelixCore.VectorTopKContainsSelf
+    postconditions:
+      - 'vector_search(v.embedding, k).len() >= 1'
+      - 'vector_search(v.embedding, k)[0] == v.id'
+
+  upsert_idempotent:
+    formula: 'count(insert(d) then insert(d), id=d.id) == 1'
+    domain: 'd ∈ Document'
+    codomain: 'bool'
+    lean_theorem: Theorems.HelixCore.UpsertIdempotent
+    postconditions:
+      - 'count_by_id(d.id) == 1 after inserting d twice'
+
+proof_obligations:
+  - type: postcondition
+    property: 'Round-trip preserves vertex identity and payload'
+    formal: 'get(insert(d)).id == d.id ∧ get(insert(d)).title == d.title'
+    applies_to: vertex_round_trip
+  - type: postcondition
+    property: 'Edge traversal surfaces the target neighbour'
+    formal: 'neighbours(a, l).contains(b) after insert_edge(a, b, l)'
+    applies_to: edge_traversal
+  - type: postcondition
+    property: 'Vector top-K returns source as top-1 when querying with self'
+    formal: 'top_k(self) is self'
+    applies_to: vector_top_k_contains_self
+  - type: postcondition
+    property: 'Duplicate insert leaves exactly one vertex'
+    formal: 'count_by_id(d.id) == 1'
+    applies_to: upsert_idempotent

@@ -1,0 +1,24 @@
+[package]
+name = "helix-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+description = "HTTP client helper + four runtime contracts demonstrating HelixDB graph-vector primitives"
+
+[dependencies]
+anyhow.workspace = true
+tokio.workspace = true
+reqwest.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[[bin]]
+name = "helix-demo"
+path = "src/main.rs"
+
+[lib]
+path = "src/lib.rs"
