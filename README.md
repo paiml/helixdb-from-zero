@@ -17,25 +17,31 @@ a small `helix-core` Rust crate that talks to HelixDB over HTTP, and four
 named runtime contracts (`C1`–`C4`) that the demo binary asserts against a
 live instance.
 
-## Quick start
+## Installation
+
+Prerequisites:
+
+- Docker (Compose v2 not required — helix-cli drives Docker directly)
+- Rust 1.95+ (`rust-toolchain.toml` pins automatically)
+- helix-cli (`make install` installs it via `cargo install --git`)
 
 ```bash
 git clone https://github.com/paiml/helixdb-from-zero
 cd helixdb-from-zero
-make install   # cargo install helix-cli (one-time)
+make install   # cargo install helix-cli (idempotent — no-op if already present)
+```
+
+## Usage
+
+```bash
 make up        # helix push dev — builds + starts HelixDB on 127.0.0.1:6969
 make demo      # cargo run --bin helix-demo — runs all 4 contracts live
+make down      # helix stop dev when you're done
 ```
 
 `make up` is `helix push dev` under the hood: it compiles `db/queries.hx`,
 builds a Docker image, and starts the container. `make demo` then exercises
 the four contracts end-to-end and prints which assertion each one checked.
-
-## Prerequisites
-
-- Docker (Compose v2 not required — helix-cli drives Docker directly)
-- Rust 1.95+ (`rust-toolchain.toml` pins automatically)
-- helix-cli (`make install` installs it via `cargo install --git`)
 
 ## What's here
 
@@ -90,6 +96,24 @@ make pmat       # pmat quality-gate
 make down       # helix stop dev (preserves the volume)
 make nuke       # helix delete dev (wipes graph + vector index)
 ```
+
+## Contributing
+
+PRs are welcome. Branch protection on `main` requires green CI
+(`cargo fmt --check`, `cargo clippy -D warnings`, `cargo test`,
+`cargo build`). Branch naming follows `feat/<topic>` / `fix/<topic>` /
+`chore/<topic>`. Open a PR against `main`; squash merge is the default.
+
+Local pre-push checklist:
+
+```bash
+make fmt && make lint && make test
+```
+
+If you're touching `db/schema.hx` or `db/queries.hx`, also run
+`make up && make demo` to confirm the four contracts still assert against
+a real `helix push dev` instance — the unit tests do not cover the live
+HTTP path.
 
 ## Course Materials
 

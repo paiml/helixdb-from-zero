@@ -29,7 +29,15 @@ down:
 	@$(HELIX) stop $(INSTANCE)
 
 nuke:
-	@yes y | $(HELIX) delete $(INSTANCE)
+	@# helix-cli sometimes exits non-zero on a cosmetic volume-cleanup step
+	@# (the Docker container writes its data dir as root; helix-cli running as
+	@# the host user cannot rm it). The container + image are still removed,
+	@# and the next `make up` recreates the volume cleanly. We pin success to
+	@# "no helix container left" rather than helix-cli's own exit code.
+	@yes y | $(HELIX) delete $(INSTANCE) || true
+	@test -z "$$(docker ps -aq --filter name=helix-$$(basename $$(pwd))-$(INSTANCE))" \
+		|| { echo "[nuke] container still present — failing" >&2; exit 1; }
+	@echo "[nuke] instance $(INSTANCE) deleted"
 
 demo:
 	@cargo run --release --bin helix-demo
