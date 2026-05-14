@@ -46,7 +46,10 @@ test:
 	@cargo test --release
 
 coverage:
-	@cargo llvm-cov --release --workspace --show-missing-lines
+	@cargo llvm-cov --release --lib \
+		--ignore-filename-regex 'main\.rs$$' \
+		--show-missing-lines \
+		--fail-under-lines 100
 
 pmat:
 	@pmat quality-gate --checks dead-code,complexity,coverage,sections,satd,security,duplicates,provability
