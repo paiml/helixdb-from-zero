@@ -3,7 +3,7 @@
 </p>
 
 [![CI](https://github.com/paiml/helixdb-from-zero/actions/workflows/ci.yml/badge.svg)](https://github.com/paiml/helixdb-from-zero/actions/workflows/ci.yml)
-[![License: MIT OR Apache-2.0](https://img.shields.io/badge/license-MIT%20OR%20Apache--2.0-blue.svg)](#license)
+[![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-blue.svg)](#license)
 [![MSRV](https://img.shields.io/badge/MSRV-1.95-orange.svg)](rust-toolchain.toml)
 [![Contracts](https://img.shields.io/badge/runtime%20contracts-4-brightgreen.svg)](contracts/helix-rust-v1.yaml)
 
@@ -13,9 +13,9 @@ The runnable companion to the Coursera course **HelixDB From Zero**, course
 #20 in the *Rust for Data Engineering* specialization.
 
 This repo ships a Helix schema + queries (`db/schema.hx`, `db/queries.hx`),
-a small `helix-core` Rust crate that talks to HelixDB over HTTP, and four
-named runtime contracts (`C1`–`C4`) that the demo binary asserts against a
-live instance.
+a small `helix-core` Rust crate that wraps the official [`helix-rs`](https://crates.io/crates/helix-rs)
+SDK, and four named runtime contracts (`C1`–`C4`) that the demo binary
+asserts against a live instance.
 
 ## Installation
 
@@ -126,7 +126,10 @@ backend.
 
 ## License
 
-Dual-licensed under [MIT](LICENSE-MIT) **OR** [Apache-2.0](LICENSE-APACHE).
-HelixDB itself is AGPL-3.0; this repo depends on the published `helix-db`
-crate and HTTP API surface, so the AGPL clause does not propagate to this
-companion code.
+[AGPL-3.0](LICENSE). HelixDB and its Rust SDK (`helix-rs`) are both
+AGPL-3.0, and `helix-core` links against `helix-rs` for HTTP transport
++ typed query serialization. The combined work is therefore AGPL-3.0;
+the repo is licensed accordingly so the propagation is honest rather
+than implicit. If you fork this companion code without HelixDB itself
+(unlikely — the contracts are pointless without an engine), the AGPL
+obligations still attach via the SDK dependency.

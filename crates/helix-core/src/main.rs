@@ -16,9 +16,10 @@ use helix_core::{
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    let url = std::env::var("HELIX_URL").unwrap_or_else(|_| DEFAULT_URL.to_string());
+    let url = std::env::var("HELIX_URL")
+        .unwrap_or_else(|_| format!("{DEFAULT_URL}:{}", helix_core::DEFAULT_PORT));
     println!("HelixDB demo · client → {url}");
-    let client = HelixClient::new(url);
+    let client = HelixClient::new(&url);
 
     // Use timestamp-suffixed titles so re-runs of `make demo` against a
     // persisted volume do not collide on UNIQUE INDEX Title.

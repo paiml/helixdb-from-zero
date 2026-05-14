@@ -7,12 +7,12 @@ repository.workspace = true
 homepage.workspace = true
 authors.workspace = true
 rust-version.workspace = true
-description = "HTTP client helper + four runtime contracts demonstrating HelixDB graph-vector primitives"
+description = "helix-rs client wrapper + four runtime contracts demonstrating HelixDB graph-vector primitives"
 
 [dependencies]
 anyhow.workspace = true
 tokio.workspace = true
-reqwest.workspace = true
+helix-rs.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 

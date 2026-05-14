@@ -1,4 +1,4 @@
-//! HelixDB HTTP client helper plus four named runtime contracts (C1–C4)
+//! HelixDB client wrapper plus four named runtime contracts (C1–C4)
 //! covering the primitives the course teaches: vertex round trip, edge
 //! traversal, vector search, and idempotent upsert.
 //!
@@ -6,61 +6,68 @@
 //! after the HTTP round trip — the same pattern duckdb-from-zero and
 //! valkey-from-zero use, adapted for HelixDB's REST surface.
 //!
-//! Helix exposes one HTTP endpoint per `QUERY` declared in `db/queries.hx`
-//! (PascalCase). Every response is wrapped in the return-variable name from
-//! the query (e.g. `{"d": {...}}`, `{"nbrs": [...]}`, `{"cnt": 1}`); the
-//! client unwraps that wrapper for the caller.
+//! The HTTP transport is provided by `helix_rs::HelixDB` (the official
+//! HelixDB Rust SDK). Each `QUERY <Name>` declared in `db/queries.hx` is
+//! mounted at `POST /<Name>` on the running instance; helix-rs's
+//! `HelixDBClient::query::<Input, Output>` handles serde encoding/decoding
+//! and the `{return_var: value}` wrapper that Helix puts around every
+//! return value.
 //!
 //! Formal spec: contracts/helix-rust-v1.yaml.
 
-use anyhow::{anyhow, Context, Result};
-use reqwest::Client;
+use anyhow::{Context, Result};
+use helix_rs::{HelixDB, HelixDBClient};
 use serde::{Deserialize, Serialize};
-use serde_json::{json, Value};
+use serde_json::json;
 
-pub const DEFAULT_URL: &str = "http://127.0.0.1:6969";
+pub const DEFAULT_URL: &str = "http://127.0.0.1";
+pub const DEFAULT_PORT: u16 = 6969;
 
-/// Thin async client wrapping `reqwest::Client` with a base URL.
-#[derive(Clone, Debug)]
+/// Thin wrapper over `helix_rs::HelixDB` carrying the four named runtime
+/// contracts. Built from a `host:port` pair via [`HelixClient::new`].
+#[derive(Debug, Clone)]
 pub struct HelixClient {
-    base_url: String,
-    http: Client,
+    inner: HelixDB,
 }
 
 impl HelixClient {
-    pub fn new(base_url: impl Into<String>) -> Self {
+    /// Connect by URL: `http://127.0.0.1:6969` etc. Splits the URL into
+    /// (endpoint, port) the way `helix_rs::HelixDB::new` expects.
+    pub fn new(url: &str) -> Self {
+        let (endpoint, port) = split_url(url);
         Self {
-            base_url: base_url.into(),
-            http: Client::new(),
+            inner: HelixDB::new(Some(&endpoint), port, None),
         }
     }
 
-    /// POST `body` to `/QueryName`, returning the raw JSON response. Errors
-    /// surface as `Err`; `GRAPH_ERROR` responses (e.g. unique-index breach)
-    /// are returned as `Ok(Value)` so callers can decide whether the error
-    /// is expected (C4 upsert) or terminal (C1/C2/C3).
-    pub async fn call(&self, query: &str, body: Value) -> Result<Value> {
-        let url = format!("{}/{}", self.base_url, query);
-        let resp = self
-            .http
-            .post(&url)
-            .json(&body)
-            .send()
-            .await
-            .with_context(|| format!("HelixDB POST {url} failed"))?;
-        let status = resp.status();
-        let value: Value = resp
-            .json()
-            .await
-            .with_context(|| format!("HelixDB POST {url} returned non-JSON (status={status})"))?;
-        Ok(value)
+    /// Direct construction from an already-built `helix_rs::HelixDB`.
+    /// Useful for tests or for callers that need to pass an `api_key`.
+    pub fn from_helix_db(db: HelixDB) -> Self {
+        Self { inner: db }
     }
 
-    /// Unwrap Helix's return-variable wrapper: `{"d": <value>}` → `<value>`.
-    pub fn unwrap_return<'a>(resp: &'a Value, var: &str) -> Result<&'a Value> {
-        resp.get(var)
-            .ok_or_else(|| anyhow!("expected return variable `{var}` in {resp}"))
+    /// Borrow the underlying `helix_rs::HelixDB` for advanced uses (custom
+    /// query bindings, generic queries not covered by the four contracts).
+    pub fn raw(&self) -> &HelixDB {
+        &self.inner
     }
+}
+
+fn split_url(url: &str) -> (String, Option<u16>) {
+    if let Some(rest) = url.strip_prefix("http://").or_else(|| url.strip_prefix("https://")) {
+        let scheme_prefix = if url.starts_with("https://") {
+            "https://"
+        } else {
+            "http://"
+        };
+        if let Some((host, port_str)) = rest.rsplit_once(':') {
+            if let Ok(port) = port_str.parse::<u16>() {
+                return (format!("{scheme_prefix}{host}"), Some(port));
+            }
+        }
+        return (format!("{scheme_prefix}{rest}"), None);
+    }
+    (url.to_string(), None)
 }
 
 /// A vertex returned by `InsertDocument` / `GetDocumentByTitle`.
@@ -71,31 +78,54 @@ pub struct Document {
     pub title: String,
 }
 
+#[derive(Debug, Deserialize)]
+struct InsertDocumentResp {
+    d: Document,
+}
+
+#[derive(Debug, Deserialize)]
+struct GetDocumentResp {
+    d: Document,
+}
+
+#[derive(Debug, Deserialize)]
+struct NeighboursResp {
+    nbrs: Vec<Document>,
+}
+
+#[derive(Debug, Deserialize)]
+struct VectorSearchResp {
+    hits: Vec<VectorHit>,
+}
+
+#[derive(Debug, Deserialize)]
+struct CountResp {
+    cnt: u64,
+}
+
 /// C1 vertex_round_trip — inserting a document by title and fetching it by
 /// title returns the same id + title.
 pub async fn vertex_round_trip(client: &HelixClient, title: &str) -> Result<Document> {
-    let inserted = client
-        .call("InsertDocument", json!({ "title": title }))
-        .await?;
-    let inserted_doc: Document =
-        serde_json::from_value(HelixClient::unwrap_return(&inserted, "d")?.clone())
-            .context("InsertDocument returned malformed payload")?;
-    let fetched = client
-        .call("GetDocumentByTitle", json!({ "title": title }))
-        .await?;
-    let fetched_doc: Document =
-        serde_json::from_value(HelixClient::unwrap_return(&fetched, "d")?.clone())
-            .context("GetDocumentByTitle returned malformed payload")?;
+    let ins: InsertDocumentResp = client
+        .inner
+        .query("InsertDocument", &json!({ "title": title }))
+        .await
+        .context("InsertDocument failed")?;
+    let got: GetDocumentResp = client
+        .inner
+        .query("GetDocumentByTitle", &json!({ "title": title }))
+        .await
+        .context("GetDocumentByTitle failed")?;
     // Provable contract C1 vertex_round_trip
     assert_eq!(
-        fetched_doc.id, inserted_doc.id,
+        got.d.id, ins.d.id,
         "C1 vertex_round_trip: GetDocumentByTitle must return the same id as InsertDocument"
     );
     assert_eq!(
-        fetched_doc.title, title,
+        got.d.title, title,
         "C1 vertex_round_trip: title must round-trip"
     );
-    Ok(fetched_doc)
+    Ok(got.d)
 }
 
 /// C2 edge_traversal — inserting `from --Related[kind]--> to` then traversing
@@ -106,24 +136,25 @@ pub async fn edge_traversal(
     to_title: &str,
     kind: &str,
 ) -> Result<Vec<Document>> {
-    let _ = client
-        .call(
+    let _: serde_json::Value = client
+        .inner
+        .query(
             "InsertRelated",
-            json!({ "from_title": from_title, "to_title": to_title, "kind": kind }),
+            &json!({ "from_title": from_title, "to_title": to_title, "kind": kind }),
         )
-        .await?;
-    let resp = client
-        .call("Neighbours", json!({ "title": from_title }))
-        .await?;
-    let nbrs: Vec<Document> =
-        serde_json::from_value(HelixClient::unwrap_return(&resp, "nbrs")?.clone())
-            .context("Neighbours returned malformed payload")?;
+        .await
+        .context("InsertRelated failed")?;
+    let resp: NeighboursResp = client
+        .inner
+        .query("Neighbours", &json!({ "title": from_title }))
+        .await
+        .context("Neighbours failed")?;
     // Provable contract C2 edge_traversal
     assert!(
-        nbrs.iter().any(|d| d.title == to_title),
+        resp.nbrs.iter().any(|d| d.title == to_title),
         "C2 edge_traversal: traversing from {from_title} via Related[{kind}] must include {to_title}"
     );
-    Ok(nbrs)
+    Ok(resp.nbrs)
 }
 
 /// One hit returned by `VectorSearch` — vector + similarity score + the
@@ -145,25 +176,26 @@ pub async fn vector_top_k_contains_self(
     embedding: &[f64],
     k: i32,
 ) -> Result<Vec<VectorHit>> {
-    let _ = client
-        .call("InsertVector", json!({ "title": title, "vec": embedding }))
-        .await?;
-    let resp = client
-        .call("VectorSearch", json!({ "vec": embedding, "k": k }))
-        .await?;
-    let hits: Vec<VectorHit> =
-        serde_json::from_value(HelixClient::unwrap_return(&resp, "hits")?.clone())
-            .context("VectorSearch returned malformed payload")?;
+    let _: serde_json::Value = client
+        .inner
+        .query("InsertVector", &json!({ "title": title, "vec": embedding }))
+        .await
+        .context("InsertVector failed")?;
+    let resp: VectorSearchResp = client
+        .inner
+        .query("VectorSearch", &json!({ "vec": embedding, "k": k }))
+        .await
+        .context("VectorSearch failed")?;
     // Provable contract C3 vector_top_k_contains_self
     assert!(
-        !hits.is_empty(),
+        !resp.hits.is_empty(),
         "C3 vector_top_k_contains_self: VectorSearch must return at least one hit"
     );
     assert_eq!(
-        hits[0].doc_title, title,
+        resp.hits[0].doc_title, title,
         "C3 vector_top_k_contains_self: top-1 must be the source vector tagged {title}"
     );
-    Ok(hits)
+    Ok(resp.hits)
 }
 
 /// C4 upsert_idempotent — `UNIQUE INDEX Title` is the enforcement primitive.
@@ -173,26 +205,34 @@ pub async fn vector_top_k_contains_self(
 pub async fn upsert_idempotent(client: &HelixClient, title: &str) -> Result<u64> {
     // First insert — we don't care whether the vertex already exists; we
     // only care that after both calls the count is exactly 1.
-    let _ = client
-        .call("InsertDocument", json!({ "title": title }))
-        .await?;
+    let _: serde_json::Value = client
+        .inner
+        .query("InsertDocument", &json!({ "title": title }))
+        .await
+        .context("first InsertDocument failed")?;
     // Second insert — expected to surface `GRAPH_ERROR` from the UNIQUE
-    // INDEX. That is part of the contract: the engine refuses to duplicate.
-    let dup = client
-        .call("InsertDocument", json!({ "title": title }))
-        .await?;
-    let resp = client
-        .call("CountByTitle", json!({ "title": title }))
-        .await?;
-    let count: u64 = serde_json::from_value(HelixClient::unwrap_return(&resp, "cnt")?.clone())
-        .context("CountByTitle returned malformed payload")?;
+    // INDEX. helix-rs maps that to `Err(HelixError::RemoteError)`, which is
+    // part of the contract: the engine refuses to duplicate.
+    let dup_msg = match client
+        .inner
+        .query::<_, serde_json::Value>("InsertDocument", &json!({ "title": title }))
+        .await
+    {
+        Ok(v) => format!("unexpected Ok({v})"),
+        Err(e) => e.to_string(),
+    };
+    let resp: CountResp = client
+        .inner
+        .query("CountByTitle", &json!({ "title": title }))
+        .await
+        .context("CountByTitle failed")?;
     // Provable contract C4 upsert_idempotent
     assert_eq!(
-        count, 1,
+        resp.cnt, 1,
         "C4 upsert_idempotent: inserting the same title twice must leave exactly one vertex \
-         (second-insert response was {dup})"
+         (second-insert response was {dup_msg})"
     );
-    Ok(count)
+    Ok(resp.cnt)
 }
 
 #[cfg(test)]
@@ -214,20 +254,32 @@ mod tests {
     }
 
     /// Helix's wire format wraps return values in the query's return
-    /// variable name. `unwrap_return` peels that wrapper.
+    /// variable name (`{"d": {...}}`). The per-query response structs
+    /// deserialize that wrapper directly.
     #[test]
     fn unwraps_return_variable_wrapper() {
-        let wrapped =
-            serde_json::from_str::<Value>(r#"{"d":{"id":"abc","Title":"hello"}}"#).unwrap();
-        let inner = HelixClient::unwrap_return(&wrapped, "d").expect("unwrap d");
-        let doc: Document = serde_json::from_value(inner.clone()).expect("deserialize Document");
-        assert_eq!(doc.id, "abc");
-        assert_eq!(doc.title, "hello");
+        let wrapped: InsertDocumentResp =
+            serde_json::from_str(r#"{"d":{"id":"abc","Title":"hello"}}"#).expect("deserialize");
+        assert_eq!(wrapped.d.id, "abc");
+        assert_eq!(wrapped.d.title, "hello");
     }
 
     #[test]
-    fn helix_client_constructs_with_base_url() {
+    fn helix_client_constructs_from_url() {
         let c = HelixClient::new("http://127.0.0.1:6969");
-        assert_eq!(c.base_url, "http://127.0.0.1:6969");
+        // `helix_rs::HelixDB` doesn't expose endpoint/port getters, so we
+        // exercise the URL split helper directly to confirm parsing.
+        let (host, port) = split_url("http://127.0.0.1:6969");
+        assert_eq!(host, "http://127.0.0.1");
+        assert_eq!(port, Some(6969));
+        // and the client constructed without panicking
+        let _ = c.raw();
+    }
+
+    #[test]
+    fn split_url_handles_host_without_port() {
+        let (host, port) = split_url("http://example.com");
+        assert_eq!(host, "http://example.com");
+        assert_eq!(port, None);
     }
 }
