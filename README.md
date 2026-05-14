@@ -12,38 +12,39 @@
 The runnable companion to the Coursera course **HelixDB From Zero**, course
 #20 in the *Rust for Data Engineering* specialization.
 
-This repo bundles a Docker Compose stack for HelixDB (graph + vector
-database), a small `helix-core` Rust crate that talks to HelixDB over HTTP,
-and four named runtime contracts (`C1`–`C4`) that the demo binary asserts
-against a live instance.
+This repo ships a Helix schema + queries (`db/schema.hx`, `db/queries.hx`),
+a small `helix-core` Rust crate that talks to HelixDB over HTTP, and four
+named runtime contracts (`C1`–`C4`) that the demo binary asserts against a
+live instance.
 
 ## Quick start
 
 ```bash
 git clone https://github.com/paiml/helixdb-from-zero
 cd helixdb-from-zero
-make up         # docker compose up + healthcheck
-make demo       # cargo run --bin helix-demo
+make install   # cargo install helix-cli (one-time)
+make up        # helix push dev — builds + starts HelixDB on 127.0.0.1:6969
+make demo      # cargo run --bin helix-demo — runs all 4 contracts live
 ```
 
-`make up` brings up HelixDB on `127.0.0.1:6969` and waits for the
-healthcheck to flip green. `make demo` then exercises the four contracts
-end-to-end and prints which assertion each one checked.
+`make up` is `helix push dev` under the hood: it compiles `db/queries.hx`,
+builds a Docker image, and starts the container. `make demo` then exercises
+the four contracts end-to-end and prints which assertion each one checked.
 
 ## Prerequisites
 
-- Docker (Compose v2)
+- Docker (Compose v2 not required — helix-cli drives Docker directly)
 - Rust 1.95+ (`rust-toolchain.toml` pins automatically)
-- `curl` (for the healthcheck path)
+- helix-cli (`make install` installs it via `cargo install --git`)
 
 ## What's here
 
 ```
 crates/helix-core/   Rust client + 4 named runtime contracts
 contracts/           helix-rust-v1.yaml — formal spec for the four contracts
-helix/               .hx schema + queries (push with `helix push`)
-compose.yml          HelixDB single-node service
-Makefile             entry points: up / demo / test / coverage / pmat / fmt / lint
+db/                  schema.hx + queries.hx — pushed by `helix push`
+helix.toml           Helix project config (name, queries path, ports)
+Makefile             entry points: install / up / demo / test / coverage / pmat / fmt / lint
 assets/              hero.svg + hero.png
 ```
 
@@ -53,29 +54,41 @@ Each public async function in `crates/helix-core/src/lib.rs` asserts a
 named runtime contract immediately after the HTTP round trip. Formal spec
 lives in [`contracts/helix-rust-v1.yaml`](contracts/helix-rust-v1.yaml).
 
-| Contract                          | Asserted in                            |
-|-----------------------------------|----------------------------------------|
-| `vertex_round_trip` (C1)          | `vertex_round_trip()`                  |
-| `edge_traversal` (C2)             | `edge_traversal()`                     |
-| `vector_top_k_contains_self` (C3) | `vector_top_k_contains_self()`         |
-| `upsert_idempotent` (C4)          | `upsert_idempotent()`                  |
+| Contract                          | Asserted in                            | HelixQL query                  |
+|-----------------------------------|----------------------------------------|--------------------------------|
+| `vertex_round_trip` (C1)          | `vertex_round_trip()`                  | `InsertDocument`, `GetDocumentByTitle` |
+| `edge_traversal` (C2)             | `edge_traversal()`                     | `InsertRelated`, `Neighbours`  |
+| `vector_top_k_contains_self` (C3) | `vector_top_k_contains_self()`         | `InsertVector`, `VectorSearch` |
+| `upsert_idempotent` (C4)          | `upsert_idempotent()`                  | `InsertDocument` (×2), `CountByTitle` |
 
 A breach panics with the contract name in the message; the demo binary
 walks all four against the running HelixDB and aborts loudly on any
 violation rather than ship corrupt state downstream.
 
+## Distribution model
+
+HelixDB has no published Docker Hub image and no Homebrew tap; the
+canonical installer is `cargo install --git
+https://github.com/HelixDB/helix-db helix-cli`, which puts the `helix`
+binary on PATH. `helix push <instance>` then compiles the local `.hx`
+files, builds a Docker image on demand, and starts the container. This
+repo's `make up` / `make down` / `make nuke` wrap those commands directly
+— there is intentionally no `compose.yml`, since `helix push` *is* the
+deployment primitive.
+
 ## Commands
 
 ```bash
-make up         # docker compose up -d (HelixDB on 127.0.0.1:6969)
+make install    # cargo install helix-cli (one-time, idempotent)
+make up         # helix push dev (HelixDB on 127.0.0.1:6969)
 make demo       # cargo run --bin helix-demo (4 contracts, live engine)
-make test       # cargo test --release
+make test       # cargo test --release (3 lib unit tests)
 make coverage   # cargo llvm-cov --release --workspace
 make lint       # cargo clippy --all-targets -- -D warnings
 make fmt        # cargo fmt --all
 make pmat       # pmat quality-gate
-make down       # docker compose down (preserves the volume)
-make nuke       # docker compose down -v (wipes graph + vector index)
+make down       # helix stop dev (preserves the volume)
+make nuke       # helix delete dev (wipes graph + vector index)
 ```
 
 ## Course Materials
@@ -90,6 +103,6 @@ backend.
 ## License
 
 Dual-licensed under [MIT](LICENSE-MIT) **OR** [Apache-2.0](LICENSE-APACHE).
-HelixDB itself is AGPL-3.0; this repo depends on the published Docker
-image and the HTTP API surface, so the AGPL clause does not propagate to
-this companion code.
+HelixDB itself is AGPL-3.0; this repo depends on the published `helix-db`
+crate and HTTP API surface, so the AGPL clause does not propagate to this
+companion code.
