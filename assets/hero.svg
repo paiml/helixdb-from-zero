@@ -1,61 +1,159 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 480" width="1280" height="480">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 480" width="1280" height="480"
+     role="img" aria-label="HelixDB from Zero — companion repo hero: graph and vector engine unified, four runtime contracts">
+  <title>HelixDB From Zero — companion repo hero</title>
+  <desc>Banner: graph subgraph on the left, unified HelixDB hexagonal engine in the centre, vector top-K cluster on the right. Four green checkmarks across the bottom represent the four runtime contracts the demo binary asserts.</desc>
   <defs>
-    <radialGradient id="bg-glow" cx="640" cy="240" r="720" gradientUnits="userSpaceOnUse">
-      <stop offset="0" stop-color="#7c5cff" stop-opacity="0.20"/>
-      <stop offset="0.6" stop-color="#0d1117" stop-opacity="0"/>
-    </radialGradient>
-    <linearGradient id="edge-grad" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#7c5cff"/>
-      <stop offset="1" stop-color="#36b37e"/>
+    <linearGradient id="bgWashH" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"  stop-color="#6366f1" stop-opacity="0.22"/>
+      <stop offset="50%" stop-color="#9c84ff" stop-opacity="0.16"/>
+      <stop offset="100%" stop-color="#ffab00" stop-opacity="0.20"/>
     </linearGradient>
+    <radialGradient id="leftGlowH" cx="50%" cy="50%" r="55%">
+      <stop offset="0%"  stop-color="#6366f1" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#6366f1" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="centerGlowH" cx="50%" cy="50%" r="60%">
+      <stop offset="0%"  stop-color="#9c84ff" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#9c84ff" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="rightGlowH" cx="50%" cy="50%" r="55%">
+      <stop offset="0%"  stop-color="#ffab00" stop-opacity="0.24"/>
+      <stop offset="100%" stop-color="#ffab00" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="engineFillH" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%"   stop-color="#6366f1" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#9c84ff" stop-opacity="0.55"/>
+    </linearGradient>
+    <radialGradient id="hubFillH" cx="50%" cy="50%" r="60%">
+      <stop offset="0%"  stop-color="#ffab00" stop-opacity="0.95"/>
+      <stop offset="100%" stop-color="#ff9d1a" stop-opacity="0.65"/>
+    </radialGradient>
+    <linearGradient id="ruleGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   stop-color="#6366f1"/>
+      <stop offset="50%"  stop-color="#9c84ff"/>
+      <stop offset="100%" stop-color="#ffab00"/>
+    </linearGradient>
+    <marker id="arrowHL" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 11 7 L 0 14 Z" fill="#9c84ff"/>
+    </marker>
+    <marker id="arrowHR" markerWidth="14" markerHeight="14" refX="11" refY="7" orient="auto" markerUnits="strokeWidth">
+      <path d="M 0 0 L 11 7 L 0 14 Z" fill="#9c84ff"/>
+    </marker>
   </defs>
+
+  <!-- Backdrop -->
   <rect width="1280" height="480" fill="#0d1117"/>
-  <rect width="1280" height="480" fill="url(#bg-glow)"/>
-  <!-- corner accents -->
-  <circle cx="40"   cy="40"  r="11" fill="#7c5cff" fill-opacity="0.75"/>
-  <circle cx="1240" cy="40"  r="11" fill="#36b37e" fill-opacity="0.75"/>
-  <circle cx="40"   cy="440" r="11" fill="#ffab00" fill-opacity="0.75"/>
-  <circle cx="1240" cy="440" r="11" fill="#4a9eff" fill-opacity="0.75"/>
+  <rect width="1280" height="480" fill="url(#bgWashH)"/>
 
-  <!-- Title rule + thin headline-bar -->
-  <rect x="80" y="60" width="1120" height="4" fill="url(#edge-grad)" opacity="0.75"/>
+  <!-- Atmospheric backdrops per zone -->
+  <circle cx="280" cy="220" r="200" fill="url(#leftGlowH)"/>
+  <circle cx="640" cy="220" r="180" fill="url(#centerGlowH)"/>
+  <circle cx="1000" cy="220" r="200" fill="url(#rightGlowH)"/>
 
-  <!-- Left half: graph nodes + edges -->
-  <g id="graph">
-    <line x1="220" y1="180" x2="360" y2="130" stroke="#7c5cff" stroke-width="6" opacity="0.85"/>
-    <line x1="220" y1="180" x2="380" y2="280" stroke="#7c5cff" stroke-width="6" opacity="0.85"/>
-    <line x1="380" y1="280" x2="540" y2="220" stroke="#36b37e" stroke-width="6" opacity="0.85"/>
-    <line x1="380" y1="280" x2="280" y2="380" stroke="#36b37e" stroke-width="6" opacity="0.85"/>
-    <line x1="360" y1="130" x2="540" y2="220" stroke="#ffab00" stroke-width="6" opacity="0.85"/>
-    <line x1="540" y1="220" x2="500" y2="370" stroke="#4a9eff" stroke-width="6" opacity="0.85"/>
-    <circle cx="220" cy="180" r="36" fill="#7c5cff" fill-opacity="0.50" stroke="#b8acff" stroke-width="6"/>
-    <circle cx="360" cy="130" r="32" fill="#36b37e" fill-opacity="0.55" stroke="#7ee787" stroke-width="6"/>
-    <circle cx="380" cy="280" r="42" fill="#7c5cff" fill-opacity="0.55" stroke="#b8acff" stroke-width="6"/>
-    <circle cx="540" cy="220" r="34" fill="#ffab00" fill-opacity="0.55" stroke="#f0c674" stroke-width="6"/>
-    <circle cx="280" cy="380" r="30" fill="#4a9eff" fill-opacity="0.55" stroke="#a5d6ff" stroke-width="6"/>
-    <circle cx="500" cy="370" r="28" fill="#36b37e" fill-opacity="0.55" stroke="#7ee787" stroke-width="6"/>
+  <!-- Corner accent dots (shared visual vocabulary) -->
+  <circle cx="40"   cy="40"  r="11" fill="#6366f1" fill-opacity="0.65"/>
+  <circle cx="1240" cy="40"  r="11" fill="#36b37e" fill-opacity="0.65"/>
+  <circle cx="40"   cy="440" r="11" fill="#ffab00" fill-opacity="0.65"/>
+  <circle cx="1240" cy="440" r="11" fill="#9c84ff" fill-opacity="0.65"/>
+
+  <!-- Top + bottom rules -->
+  <rect x="80" y="50" width="1120" height="4" fill="url(#ruleGrad)" opacity="0.75"/>
+
+  <!-- ============================================================== -->
+  <!-- LEFT zone: graph subgraph (6 nodes, 8 edges)                    -->
+  <!-- ============================================================== -->
+  <g id="graph-zone-h">
+    <line x1="170" y1="140" x2="320" y2="100" stroke="#9c84ff" stroke-width="7" stroke-opacity="0.75"/>
+    <line x1="170" y1="140" x2="290" y2="240" stroke="#9c84ff" stroke-width="7" stroke-opacity="0.75"/>
+    <line x1="320" y1="100" x2="450" y2="160" stroke="#9c84ff" stroke-width="7" stroke-opacity="0.75"/>
+    <line x1="290" y1="240" x2="450" y2="160" stroke="#36b37e" stroke-width="7" stroke-opacity="0.75"/>
+    <line x1="290" y1="240" x2="200" y2="340" stroke="#36b37e" stroke-width="7" stroke-opacity="0.75"/>
+    <line x1="450" y1="160" x2="410" y2="350" stroke="#36b37e" stroke-width="7" stroke-opacity="0.75"/>
+    <line x1="200" y1="340" x2="410" y2="350" stroke="#9c84ff" stroke-width="7" stroke-opacity="0.75"/>
+    <line x1="320" y1="100" x2="290" y2="240" stroke="#9c84ff" stroke-width="7" stroke-opacity="0.75"/>
+
+    <circle cx="170" cy="140" r="34" fill="#6366f1" fill-opacity="0.55" stroke="#a5b4fc" stroke-width="6"/>
+    <circle cx="320" cy="100" r="30" fill="#36b37e" fill-opacity="0.55" stroke="#7ee787" stroke-width="6"/>
+    <circle cx="450" cy="160" r="32" fill="#6366f1" fill-opacity="0.55" stroke="#a5b4fc" stroke-width="6"/>
+    <circle cx="290" cy="240" r="40" fill="#6366f1" fill-opacity="0.55" stroke="#a5b4fc" stroke-width="7"/>
+    <circle cx="200" cy="340" r="28" fill="#36b37e" fill-opacity="0.55" stroke="#7ee787" stroke-width="6"/>
+    <circle cx="410" cy="350" r="30" fill="#6366f1" fill-opacity="0.55" stroke="#a5b4fc" stroke-width="6"/>
   </g>
 
-  <!-- Right half: vector space dots (top-K hits with the query at center) -->
-  <g id="vector-space">
-    <circle cx="940" cy="240" r="190" fill="none" stroke="#7c5cff" stroke-width="2" stroke-dasharray="6 6" opacity="0.45"/>
-    <circle cx="940" cy="240" r="120" fill="none" stroke="#36b37e" stroke-width="2" stroke-dasharray="6 6" opacity="0.55"/>
-    <circle cx="940" cy="240" r="60"  fill="none" stroke="#ffab00" stroke-width="2" stroke-dasharray="6 6" opacity="0.65"/>
-    <circle cx="940" cy="240" r="14" fill="#ffab00" fill-opacity="0.85" stroke="#f0c674" stroke-width="4"/>
-    <circle cx="900" cy="220" r="10" fill="#ffab00" fill-opacity="0.65" stroke="#f0c674" stroke-width="3"/>
-    <circle cx="985" cy="270" r="10" fill="#36b37e" fill-opacity="0.65" stroke="#7ee787" stroke-width="3"/>
-    <circle cx="880" cy="280" r="10" fill="#36b37e" fill-opacity="0.65" stroke="#7ee787" stroke-width="3"/>
-    <circle cx="1020" cy="200" r="10" fill="#36b37e" fill-opacity="0.65" stroke="#7ee787" stroke-width="3"/>
-    <circle cx="830" cy="160" r="9" fill="#7c5cff" fill-opacity="0.55" stroke="#b8acff" stroke-width="3"/>
-    <circle cx="1060" cy="320" r="9" fill="#7c5cff" fill-opacity="0.55" stroke="#b8acff" stroke-width="3"/>
-    <circle cx="870" cy="340" r="9" fill="#7c5cff" fill-opacity="0.55" stroke="#b8acff" stroke-width="3"/>
-    <circle cx="1090" cy="160" r="9" fill="#7c5cff" fill-opacity="0.55" stroke="#b8acff" stroke-width="3"/>
-    <circle cx="780" cy="240" r="8" fill="#4a9eff" fill-opacity="0.45" stroke="#a5d6ff" stroke-width="3"/>
-    <circle cx="1100" cy="260" r="8" fill="#4a9eff" fill-opacity="0.45" stroke="#a5d6ff" stroke-width="3"/>
-    <circle cx="950" cy="120" r="8" fill="#4a9eff" fill-opacity="0.45" stroke="#a5d6ff" stroke-width="3"/>
-    <circle cx="950" cy="380" r="8" fill="#4a9eff" fill-opacity="0.45" stroke="#a5d6ff" stroke-width="3"/>
+  <!-- Left → centre flow arrow -->
+  <line x1="495" y1="220" x2="555" y2="220" stroke="#9c84ff" stroke-width="7" marker-end="url(#arrowHL)"/>
+
+  <!-- ============================================================== -->
+  <!-- CENTER zone: HelixDB unified engine icon (hexagon + 4 quadrants)-->
+  <!-- ============================================================== -->
+  <g id="engine-zone-h">
+    <polygon points="640,80 760,150 760,290 640,360 520,290 520,150"
+             fill="url(#engineFillH)" stroke="#6366f1" stroke-width="9"/>
+    <polygon points="640,120 725,170 725,270 640,320 555,270 555,170"
+             fill="#161b22" fill-opacity="0.45" stroke="#9c84ff" stroke-width="4"/>
+
+    <!-- N::Type — graph node icon (top-left) -->
+    <circle cx="595" cy="190" r="14" fill="#6366f1" fill-opacity="0.85" stroke="#a5b4fc" stroke-width="4"/>
+    <circle cx="625" cy="190" r="9"  fill="#6366f1" fill-opacity="0.65" stroke="#a5b4fc" stroke-width="3.5"/>
+    <line x1="609" y1="190" x2="616" y2="190" stroke="#a5b4fc" stroke-width="4"/>
+
+    <!-- V::Type — vector dots (top-right) -->
+    <circle cx="675" cy="180" r="5" fill="#ffab00" fill-opacity="0.85"/>
+    <circle cx="690" cy="190" r="5" fill="#ffab00" fill-opacity="0.85"/>
+    <circle cx="675" cy="200" r="5" fill="#ffab00" fill-opacity="0.85"/>
+    <circle cx="690" cy="175" r="5" fill="#ffab00" fill-opacity="0.65"/>
+
+    <!-- E::Type — typed edge (bottom-left) -->
+    <circle cx="595" cy="270" r="11" fill="#36b37e" fill-opacity="0.85" stroke="#7ee787" stroke-width="4"/>
+    <circle cx="635" cy="270" r="11" fill="#36b37e" fill-opacity="0.85" stroke="#7ee787" stroke-width="4"/>
+    <line x1="606" y1="270" x2="624" y2="270" stroke="#7ee787" stroke-width="4"/>
+    <polygon points="622,265 632,270 622,275" fill="#7ee787"/>
+
+    <!-- KV — key/value rows (bottom-right) -->
+    <rect x="665" y="258" width="50" height="9" rx="2" fill="#9c84ff" fill-opacity="0.85" stroke="#9c84ff" stroke-width="3"/>
+    <rect x="665" y="274" width="40" height="9" rx="2" fill="#9c84ff" fill-opacity="0.65" stroke="#9c84ff" stroke-width="3"/>
+    <rect x="665" y="290" width="44" height="9" rx="2" fill="#9c84ff" fill-opacity="0.85" stroke="#9c84ff" stroke-width="3"/>
   </g>
 
-  <!-- Bottom rule -->
-  <rect x="80" y="416" width="1120" height="4" fill="url(#edge-grad)" opacity="0.75"/>
+  <!-- Center → right flow arrow -->
+  <line x1="765" y1="220" x2="825" y2="220" stroke="#9c84ff" stroke-width="7" marker-end="url(#arrowHR)"/>
+
+  <!-- ============================================================== -->
+  <!-- RIGHT zone: vector top-K cluster                                -->
+  <!-- ============================================================== -->
+  <g id="vector-zone-h">
+    <circle cx="1000" cy="220" r="170" fill="none" stroke="#6366f1" stroke-width="3.5" stroke-dasharray="9 9" opacity="0.55"/>
+    <circle cx="1000" cy="220" r="110" fill="none" stroke="#36b37e" stroke-width="3.5" stroke-dasharray="9 9" opacity="0.65"/>
+    <circle cx="1000" cy="220" r="55"  fill="none" stroke="#ffab00" stroke-width="3.5" stroke-dasharray="9 9" opacity="0.75"/>
+
+    <circle cx="1000" cy="220" r="22" fill="url(#hubFillH)" stroke="#f0c674" stroke-width="6"/>
+
+    <circle cx="960"  cy="190" r="11" fill="#ffab00" fill-opacity="0.65" stroke="#f0c674" stroke-width="5"/>
+    <circle cx="1042" cy="200" r="11" fill="#36b37e" fill-opacity="0.65" stroke="#7ee787" stroke-width="5"/>
+    <circle cx="1030" cy="260" r="11" fill="#36b37e" fill-opacity="0.65" stroke="#7ee787" stroke-width="5"/>
+    <circle cx="958"  cy="258" r="11" fill="#ffab00" fill-opacity="0.65" stroke="#f0c674" stroke-width="5"/>
+
+    <circle cx="908" cy="170" r="9" fill="#6366f1" fill-opacity="0.55" stroke="#a5b4fc" stroke-width="4"/>
+    <circle cx="1090" cy="170" r="9" fill="#6366f1" fill-opacity="0.55" stroke="#a5b4fc" stroke-width="4"/>
+    <circle cx="1090" cy="280" r="9" fill="#6366f1" fill-opacity="0.55" stroke="#a5b4fc" stroke-width="4"/>
+    <circle cx="908"  cy="290" r="9" fill="#36b37e" fill-opacity="0.55" stroke="#7ee787" stroke-width="4"/>
+
+    <circle cx="850"  cy="220" r="8" fill="#9c84ff" fill-opacity="0.45" stroke="#a5b4fc" stroke-width="4"/>
+    <circle cx="1150" cy="220" r="8" fill="#9c84ff" fill-opacity="0.45" stroke="#a5b4fc" stroke-width="4"/>
+    <circle cx="1000" cy="80"  r="8" fill="#9c84ff" fill-opacity="0.45" stroke="#a5b4fc" stroke-width="4"/>
+    <circle cx="1000" cy="360" r="8" fill="#9c84ff" fill-opacity="0.45" stroke="#a5b4fc" stroke-width="4"/>
+  </g>
+
+  <!-- ============================================================== -->
+  <!-- BOTTOM: 4-contract checkmark strip (C1, C2, C3, C4)             -->
+  <!-- ============================================================== -->
+  <g id="contracts-strip-h">
+    <rect x="80" y="395" width="1120" height="42" rx="8" fill="#161b22" fill-opacity="0.85" stroke="#36b37e" stroke-width="5"/>
+    <g stroke="#36b37e" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="200,418 220,432 252,402"/>
+      <polyline points="480,418 500,432 532,402"/>
+      <polyline points="760,418 780,432 812,402"/>
+      <polyline points="1040,418 1060,432 1092,402"/>
+    </g>
+  </g>
 </svg>
