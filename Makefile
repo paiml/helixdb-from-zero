@@ -1,37 +1,43 @@
-.PHONY: help up down nuke wait demo test fmt lint coverage pmat clean
+.PHONY: help install up down nuke demo test fmt lint coverage pmat clean
+
+HELIX ?= helix
+INSTANCE ?= dev
 
 help:
 	@echo "HelixDB From Zero — companion repo"
 	@echo ""
-	@echo "  make up        — docker compose up -d (HelixDB on 127.0.0.1:6969)"
-	@echo "  make down      — docker compose down (keeps the named volume)"
-	@echo "  make nuke      — docker compose down -v (wipes the graph + vector index)"
-	@echo "  make wait      — wait for the healthcheck to flip green"
-	@echo "  make demo      — cargo run --bin helix-demo (4 contracts, live HelixDB)"
-	@echo "  make test      — cargo test --release (lib unit + integration)"
+	@echo "  make install   — cargo install --git https://github.com/HelixDB/helix-db helix-cli"
+	@echo "  make up        — helix push $(INSTANCE) (builds + starts the local image)"
+	@echo "  make down      — helix stop $(INSTANCE) (keeps the data volume)"
+	@echo "  make nuke      — helix delete $(INSTANCE) (wipes the graph + vector index)"
+	@echo "  make demo      — cargo run --release --bin helix-demo (4 contracts, live HelixDB)"
+	@echo "  make test      — cargo test --release (3 lib unit tests)"
 	@echo "  make coverage  — cargo llvm-cov --release --workspace"
 	@echo "  make pmat      — pmat quality-gate (entropy excluded — small-repo artifact)"
 	@echo "  make fmt lint  — cargo fmt && cargo clippy"
 	@echo "  make clean     — cargo clean"
 
-up:
-	@docker compose up -d
-	@$(MAKE) wait
+install:
+	@command -v $(HELIX) >/dev/null 2>&1 \
+		&& echo "[install] helix-cli already on PATH ($$($(HELIX) --version))" \
+		|| cargo install --git https://github.com/HelixDB/helix-db helix-cli
 
-wait:
-	@printf "[wait] helix healthcheck "
-	@for i in $$(seq 1 30); do \
-		state=$$(docker inspect -f '{{.State.Health.Status}}' helixdb-from-zero 2>/dev/null || echo missing); \
-		if [ "$$state" = "healthy" ]; then echo "✓ healthy"; exit 0; fi; \
-		printf "."; sleep 1; \
-	done; \
-	echo " ✗ timed out"; exit 1
+up:
+	@$(HELIX) push $(INSTANCE)
 
 down:
-	@docker compose down
+	@$(HELIX) stop $(INSTANCE)
 
 nuke:
-	@docker compose down -v
+	@# helix-cli sometimes exits non-zero on a cosmetic volume-cleanup step
+	@# (the Docker container writes its data dir as root; helix-cli running as
+	@# the host user cannot rm it). The container + image are still removed,
+	@# and the next `make up` recreates the volume cleanly. We pin success to
+	@# "no helix container left" rather than helix-cli's own exit code.
+	@yes y | $(HELIX) delete $(INSTANCE) || true
+	@test -z "$$(docker ps -aq --filter name=helix-$$(basename $$(pwd))-$(INSTANCE))" \
+		|| { echo "[nuke] container still present — failing" >&2; exit 1; }
+	@echo "[nuke] instance $(INSTANCE) deleted"
 
 demo:
 	@cargo run --release --bin helix-demo
@@ -40,7 +46,10 @@ test:
 	@cargo test --release
 
 coverage:
-	@cargo llvm-cov --release --workspace --show-missing-lines
+	@cargo llvm-cov --release --lib \
+		--ignore-filename-regex 'main\.rs$$' \
+		--show-missing-lines \
+		--fail-under-lines 100
 
 pmat:
 	@pmat quality-gate --checks dead-code,complexity,coverage,sections,satd,security,duplicates,provability

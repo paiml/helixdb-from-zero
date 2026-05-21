@@ -9,3 +9,6 @@
 /.pmat/
 /.pmat-metrics/
 /.pv/
+
+# helix-cli local workspace: pinned upstream helix-db source + built artefacts
+/.helix/
